@@ -41,7 +41,7 @@ static struct value* if_eval (struct if_struct* data, struct closure* c)
 	
 	bool v = value_get_bool(cond);
 	
-	value_release(cond);
+	//value_release(cond);
 	
 	if (v)
 		return atoken_evaluate(data->clause_then, c);
@@ -125,7 +125,8 @@ static struct value* cond_eval (struct cond_struct* s, struct closure* c)
 				runtime_error("Conditions in 'cond' must all be boolean");
 			
 			b = value_get_bool(condition);
-			value_release(condition);
+			///value_release(condition);
+			// lelelel
 		}
 		
 		if (b)
@@ -187,6 +188,48 @@ static struct atoken* create_let (struct token** vars, int nvars, struct token* 
 	return atoken_push(result);
 }
 
+
+struct do_struct
+{
+	int len;
+	struct atoken** tokens;
+};
+static struct value* do_evaluate (struct do_struct* d, struct closure* c)
+{
+	struct value* result = value_create_void();
+	int i;
+	for (i = 0; i < d->len; i++)
+	{
+		value_release(result);
+		result = atoken_evaluate(d->tokens[i], c);
+	}
+	return result;
+}
+
+
+struct while_struct
+{
+	struct atoken* cond;
+	struct atoken* body;
+};
+static struct value* while_evaluate (struct while_struct* s, struct closure* c)
+{
+	struct value* condv;
+
+	for (;;)
+	{
+		condv = atoken_evaluate(s->cond, c);
+		if (value_get_type(condv) != value_bool)
+			runtime_error("Expected 'while' statement condition to be boolean");
+			
+		if (value_get_bool(condv))
+			value_release(atoken_evaluate(s->body, c));
+		else
+			break;
+	}
+	
+	return value_create_void();
+}
 
 
 
@@ -309,6 +352,35 @@ bool atoken_parse_group (const char* name, int argc, struct token** argv, struct
 		
 		struct token__group* group = (struct token__group*)argv[0];
 		*out = create_let(group->items, group->length, argv[1], proto);
+		return true;
+	}
+	if (strcmp(name, "do") == 0)
+	{
+		struct do_struct* s;
+		result = create_atoken(sizeof(struct do_struct) + argc * sizeof(struct atoken*), (void**)&s);
+		result->f_eval = (eval_func)do_evaluate;
+		result->f_destroy = NULL_DESTROY;
+		int i;
+		s->len = argc;
+		s->tokens = (struct atoken**)(s + 1);
+		for (i = 0; i < argc; i++)
+			s->tokens[i] = atoken_parse(argv[i], proto);
+		
+		*out = atoken_push(result);
+		return true;
+	}
+	if (strcmp(name, "while") == 0)
+	{
+		if (argc != 2)
+			parse_error("Expected 2 arguments to 'while' syntax");
+			
+		struct while_struct* s;
+		result = create_atoken(sizeof(struct while_struct), (void**)&s);
+		result->f_eval = (eval_func)while_evaluate;
+		result->f_destroy = NULL_DESTROY;
+		s->cond = atoken_parse(argv[0], proto);
+		s->body = atoken_parse(argv[1], proto);
+		*out = atoken_push(result);
 		return true;
 	}
 	

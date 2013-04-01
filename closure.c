@@ -5,7 +5,7 @@
 struct closure* closure_expand (struct closure* c, int add)
 {
 	int s, i;
-	if (c == NULL)			// when i try it, c == NULL so  s == 0
+	if (c == NULL)			
 		s = 0;
 	else
 		s = c->size;

@@ -125,7 +125,7 @@ number_t value_get_number (struct value* value)
 }
 bool value_get_bool (struct value* value)
 {
-	return value == c_bool_true;
+	return value != c_bool_false;
 }
 struct value* value_get_head (struct value* pair)
 {
@@ -164,10 +164,9 @@ void value_display (struct value* value)
 			
 			if (n > 0)
 			{
-#define MAX_DIGITS 12
-				char buffer[MAX_DIGITS + 1];
+				char buffer[NUMBER_DIGITS + 1];
 				int i;
-				for (i = 0; i < MAX_DIGITS && n > 0; i++)
+				for (i = 0; i < NUMBER_DIGITS && n > 0; i++)
 				{
 					n *= 10;
 					buffer[i] = '0' + (int)n;
@@ -179,8 +178,6 @@ void value_display (struct value* value)
 				
 				if (i > 0)
 					printf(".%s", buffer);
-				
-#undef MAX_DIGITS
 			}
 			
 			break;
@@ -230,8 +227,24 @@ void value_display (struct value* value)
 		}
 		
 		case value_string:
-			printf("%s", value_get_string(value));
+		{
+			int i, len;
+			char* str = value_get_string(value);
+			putchar('"');
+			for (i = 0, len = strlen(str); i < len; i++)
+			{
+				if (str[i] == '"')
+					putchar('\\');
+				else if (str[i] == '\n')
+				{
+					printf("\\n");
+					continue;
+				}
+				putchar(str[i]);
+			}
+			putchar('"');
 			break;
+		}
 		
 		default:
 			printf("< ? id #%d ? >", value->type);

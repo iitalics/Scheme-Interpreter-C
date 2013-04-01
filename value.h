@@ -16,6 +16,8 @@ enum value_type
 };
 
 
+#define NUMBER_DIGITS 15
+
 struct value
 {
 	enum value_type type;

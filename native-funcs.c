@@ -2,6 +2,7 @@
 #include "function.h"
 #include "value.h"
 #include "globals.h"
+#include "lists.h"
 
 
 /*
@@ -43,7 +44,7 @@ static void args_check (int argc, struct value** argv, int nargc, enum value_typ
 	char q[128];
 	if (argc != nargc)
 	{
-		snprintf(q, 128, "Expected %d arguments to function '%s', got %d", nargc, name, argc);
+		snprintf(q, 128, "Expected %d argument%s to function '%s', got %d", nargc, nargc == 1 ? "" : "s", name, argc);
 		runtime_error(q);
 	}
 	int i;
@@ -56,6 +57,7 @@ static void args_check (int argc, struct value** argv, int nargc, enum value_typ
 		}
 }
 
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 static struct value* scm_add (int argc, struct value** argv)
 {
@@ -106,6 +108,11 @@ static struct value* scm_expt (int argc, struct value** argv)
 {
 	args_check(argc, argv, 2, (enum value_type[]){ value_number, value_number }, "expt");
 	return value_create_number(pow(value_get_number(argv[0]), value_get_number(argv[1])));
+}
+static struct value* scm_sqrt (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_number }, "sqrt");
+	return value_create_number(sqrt(value_get_number(argv[0])));
 }
 
 
@@ -176,7 +183,7 @@ static struct value* scm_is_null (int argc, struct value** argv)
 }
 static struct value* scm_is_bool (int argc, struct value** argv)
 {
-	args_check(argc, argv, 1, (enum value_type[]){ value_any }, "bool?");
+	args_check(argc, argv, 1, (enum value_type[]){ value_any }, "boolean?");
 	return value_create_bool(value_get_type(argv[0]) == value_bool);
 }
 static struct value* scm_is_number (int argc, struct value** argv)
@@ -193,6 +200,11 @@ static struct value* scm_is_pair (int argc, struct value** argv)
 {
 	args_check(argc, argv, 1, (enum value_type[]){ value_any }, "pair?");
 	return value_create_bool(value_get_type(argv[0]) == value_pair);
+}
+static struct value* scm_is_string (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_any }, "string?");
+	return value_create_bool(value_get_type(argv[0]) == value_string);
 }
 static struct value* scm_is_integer (int argc, struct value** argv)
 {
@@ -250,6 +262,117 @@ static struct value* scm_floor (int argc, struct value** argv)
 
 
 
+static struct value* scm_display (int argc, struct value** argv)
+{
+	int i;
+	for (i = 0; i < argc; i++)
+	{
+		if (value_get_type(argv[i]) == value_string)
+			printf("%s", value_get_string(argv[i]));
+		else
+			value_display(argv[i]);
+	}
+	
+	return value_create_void();
+}
+static struct value* scm_newline (int argc, struct value** argv)
+{
+	printf("\n");
+	return value_create_void();
+}
+static struct value* scm_read (int argc, struct value** argv)
+{
+	struct str_buffer buffer[1];
+	str_buffer_init(buffer);
+	char c;
+	while ((c = getchar()) != '\n' && c)
+		str_buffer_add(buffer, c);
+	
+	struct value* result = value_create_string(buffer->str);
+	free(buffer->str);
+	return result;
+}
+static struct value* scm_exit (int argc, struct value** argv)
+{
+	if (argc > 0)
+	{
+		switch (value_get_type(argv[0]))
+		{
+			case value_number:
+				exit((int)(value_get_number(argv[0])));
+				
+			case value_string:
+				printf("%s\n", value_get_string(argv[0]));
+				exit(0);
+				
+			default:
+				value_display(argv[0]);
+				printf("\n");
+				exit(0);
+		}
+	}
+	
+	exit(0);
+}
+static struct value* scm_number_to_string (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_number }, "number->string");
+	char output[128];
+	
+	number_t n = value_get_number(argv[0]);
+	int base = (int)n;
+	n -= base;
+	
+	char buffer[NUMBER_DIGITS + 2];
+	buffer[0] = '\0';
+	
+	if (n > 0)
+	{
+		int i;
+		for (i = 0; i < NUMBER_DIGITS && n > 0; i++)
+		{
+			n *= 10;
+			buffer[i + 1] = '0' + (int)n;
+			n -= (int)n;
+		}
+		buffer[i + 1] = '\0';
+		while (i > 1 && buffer[i] == '0')
+			buffer[i--] = '\0';
+		
+		if (i > 0)
+		{
+			buffer[0] = '.';
+		}
+	}
+	
+	sprintf(output, "%d%s", base, buffer);
+	
+	return value_create_string(output);
+}
+static struct value* scm_string_to_number (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_string }, "string->number");
+	return value_create_number(atof(value_get_string(argv[0])));
+}
+static struct value* scm_string_append (int argc, struct value** argv)
+{
+	args_check(argc, argv, 2, (enum value_type[]){ value_string, value_string }, "string-append");
+	
+	char* a = value_get_string(argv[0]);
+	char* b = value_get_string(argv[1]);
+	char out[strlen(a) + strlen(b) + 1];
+	
+	strcpy(out, a);
+	strcpy(out + strlen(a), b);
+	
+	return value_create_string(out);
+}
+static struct value* scm_string_length (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_string }, "string-length");
+	return value_create_number(strlen(value_get_string(argv[0])));
+}
+
 
 // ----------------------------------------------------------------------------------- //
 void register_native_functions ()
@@ -259,6 +382,8 @@ void register_native_functions ()
 	function_register_native("*", scm_mult);
 	function_register_native("/", scm_div);
 	function_register_native("expt", scm_expt);
+	function_register_native("floor", scm_floor);
+	function_register_native("sqrt", scm_sqrt);
 	
 	function_register_native(">", scm_gr);
 	function_register_native("<", scm_ls);
@@ -272,16 +397,25 @@ void register_native_functions ()
 	function_register_native("not", scm_not);
 	
 	function_register_native("null?", scm_is_null);
-	function_register_native("bool?", scm_is_bool);
+	function_register_native("boolean?", scm_is_bool);
 	function_register_native("number?", scm_is_number);
 	function_register_native("integer?", scm_is_integer);
 	function_register_native("void?", scm_is_void);
 	function_register_native("pair?", scm_is_pair);
+	function_register_native("string?", scm_is_string);
 	
 	function_register_native("cons", scm_cons);
 	function_register_native("car", scm_car);
 	function_register_native("cdr", scm_cdr);
 	function_register_native("list", scm_list);
 	
-	function_register_native("floor", scm_floor);
+	function_register_native("display", scm_display);
+	function_register_native("newline", scm_newline);
+	function_register_native("read", scm_read);
+	function_register_native("exit", scm_exit);
+	
+	function_register_native("string->number", scm_string_to_number);
+	function_register_native("number->string", scm_number_to_string);
+	function_register_native("string-append", scm_string_append);
+	function_register_native("string-length", scm_string_length);
 }
