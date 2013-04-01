@@ -19,6 +19,7 @@ void tokenizer_close ();
 
 struct token* tokens_create_number (number_t value);
 struct token* tokens_create_symbol (const char* name);
+struct token* tokens_create_string (const char* s);
 struct token* tokens_create_group (struct linked_list* items);
 
 

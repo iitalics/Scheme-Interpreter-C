@@ -154,6 +154,48 @@ static char* read_end ()
 	return buffer->str;
 }
 
+char read_escape_char ()
+{
+	switch (t_read())
+	{
+		case 'n': return '\n';
+		case 'r': return '\r';
+		case 't': return '\t';
+		case '\"': return '\"';
+		case '\'': return '\'';
+		
+		default:
+			tokens_error("Unrecognized escape sequence");
+			return '\0';
+	}
+}
+
+static char* read_quoted_string ()
+{
+	char quote = t_read();
+	char c;
+	
+	struct str_buffer buffer[1];
+	str_buffer_init(buffer);
+	
+	while ((c = t_read()) != quote)
+	{
+		if (t_eof())
+		{
+			//
+			char q[] = "Reached EOF before closing Q";
+			q[27] = quote;
+			tokens_error(q);
+		}
+		
+		if (c == '\\')
+			c = read_escape_char();
+		
+		str_buffer_add(buffer, c);
+	}
+	
+	return buffer->str;
+}
 
 
 
@@ -187,7 +229,7 @@ start:
 			while ((item = tokenizer_next()) != c_rparen)
 			{
 				if (item == NULL)
-					tokens_error("Reached ')' before EOF");
+					tokens_error("Reached EOF before closing ')'");
 				
 				linked_list_add(ll, item);
 			}
@@ -203,7 +245,9 @@ start:
 			t_read();
 			return c_rparen;
 			
-		//case '"':
+		case '"':
+		case '\'':
+			return tokens_create_string(read_quoted_string());
 		
 		default:
 		{
@@ -238,7 +282,8 @@ struct atoken* tokenizer_next_atoken ()
 
 
 
-static struct token* push_token (struct token* t) {
+static struct token* push_token (struct token* t)
+{
 	t->next = all_tokens;
 	all_tokens = t;
 	return t;
@@ -259,6 +304,10 @@ struct token* tokens_create_symbol (const char* name)
 		if (t->type == token_symbol && strcmp(((struct token__symbol*)t)->name, name) == 0)
 			return t;
 	return push_token(token_create_symbol(name));
+}
+struct token* tokens_create_string (const char* str)
+{
+	return push_token(token_create_string(str));
 }
 struct token* tokens_create_group (struct linked_list* items)
 {

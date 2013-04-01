@@ -192,6 +192,10 @@ struct atoken* atoken_parse (struct token* token, struct closure_proto* proto)
 			return atoken_const(val);
 		}
 		
+		case token_string:
+			return atoken_const(value_create_string(((struct token__string*)token)->str));
+		
+		
 		case token_symbol:
 		{
 			const char* name = ((struct token__symbol*)token)->name;

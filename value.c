@@ -54,6 +54,12 @@ struct value* value_create_number (number_t value)
 	v->value = value;
 	return &v->_base;
 }
+struct value* value_create_string (const char* s)
+{
+	struct value* v = value_create(value_string, sizeof(struct value) + strlen(s) + 1);
+	strcpy((char*)(v + 1), s);
+	return v;
+}
 struct value* value_create_bool (bool b)
 {
 	if (b)
@@ -128,6 +134,10 @@ struct value* value_get_head (struct value* pair)
 struct value* value_get_tail (struct value* pair)
 {
 	return value_retain(((struct value__pair*)pair)->cdr);
+}
+char* value_get_string (struct value* value)
+{
+	return (char*)(value + 1); // haha!
 }
 bool value_is_null (struct value* value)
 {
@@ -218,6 +228,10 @@ void value_display (struct value* value)
 			printf(")");
 			break;
 		}
+		
+		case value_string:
+			printf("%s", value_get_string(value));
+			break;
 		
 		default:
 			printf("< ? id #%d ? >", value->type);

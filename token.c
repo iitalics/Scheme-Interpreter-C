@@ -21,6 +21,15 @@ struct token* token_create_symbol (const char* name)
 	strcpy(n->name, name);
 	return &n->_base;
 }
+struct token* token_create_string (const char* s)
+{
+	struct token__string* n = w_malloc(sizeof(struct token__string) + strlen(s) + 1);
+	n->_base.type = token_string;
+	n->_base.next = NULL;
+	n->str = (char*)(n + 1);
+	strcpy(n->str, s);
+	return &n->_base;
+}
 struct token* token_create_group (struct linked_list* litems)
 {
 	int i, len = linked_list_length(litems);

@@ -10,7 +10,7 @@ enum value_type
 	value_bool = 3,
 	value_function = 4,
 	value_pair = 5,
-	
+	value_string = 6,
 	
 	value_any = -1
 };
@@ -31,6 +31,7 @@ struct value* value_create_number (number_t value);
 struct value* value_create_void ();
 struct value* value_create_bool (bool b);
 struct value* value_create_pair (struct value* a, struct value* b);
+struct value* value_create_string (const char* s);
 void value_destroy (struct value* v);
 
 struct value* value_retain (struct value* v);
@@ -43,6 +44,7 @@ struct value* value_get_head (struct value* pair);
 struct value* value_get_tail (struct value* pair);
 bool value_get_bool (struct value* value);
 bool value_is_null (struct value* value);
+char* value_get_string (struct value* value);
 
 
 void value_display (struct value* value);
