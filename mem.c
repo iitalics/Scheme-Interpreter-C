@@ -38,7 +38,11 @@ void memory_stats()
 
 
 
-
-
-
 #endif
+
+extern void* w_dup (void* d, size_t s)
+{
+	void* o = w_malloc(s);
+	memcpy(o, d, s);
+	return o;
+}

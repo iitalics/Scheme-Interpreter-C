@@ -19,3 +19,6 @@ extern void memory_stats();
 #define w_free free
 #define memory_stats() ;
 #endif
+
+
+extern void* w_dup (void*, size_t);

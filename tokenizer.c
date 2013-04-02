@@ -148,7 +148,7 @@ static char* read_end ()
 	
 	char c;
 	
-	while (!t_eof() && !isspace(c = t_peek()) && c != ')')
+	while (!t_eof() && !isspace(c = t_peek()) && c != ')' && c != '(')
 		str_buffer_add(buffer, t_read());
 	
 	return buffer->str;

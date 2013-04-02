@@ -35,6 +35,9 @@ struct function* function_create_lambda (int nargs, struct atoken* body, struct 
 struct function* function_create_native (char* name, struct value* (*func)(int, struct value**));
 
 void function_register_native (char* name, struct value* (*func)(int, struct value**));
+
 extern void register_native_functions();
+extern void args_check_all (int argc, struct value** argv, enum value_type type, const char* name);
+extern void args_check (int argc, struct value** argv, int nargc, const enum value_type* types, const char* name);
 
 struct value* function_apply (struct function* f, int argc, struct value** argv);

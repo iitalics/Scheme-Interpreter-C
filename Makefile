@@ -7,7 +7,7 @@ LFLAGS=-O4 -lm
 
 OUTPUT=scheme
 
-OBJECTS=main.o lists.o token.o tokenizer.o mem.o value.o closure.o atoken.o group-syntax.o err.o globals.o function.o native-funcs.o scheme.o
+OBJECTS=main.o lists.o token.o tokenizer.o mem.o value.o closure.o atoken.o group-syntax.o err.o globals.o function.o native-funcs.o scheme.o userdata.o
 
 
 
