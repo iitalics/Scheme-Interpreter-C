@@ -1,7 +1,7 @@
 CC=gcc
 LINK=gcc
 
-CFLAGS=-Wall -O4
+CFLAGS=-Wall -O3
 LFLAGS=-O4 -lm
 
 

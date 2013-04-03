@@ -8,7 +8,6 @@
 
 
 
-
 void scheme_init ()
 {
 	register_native_functions();

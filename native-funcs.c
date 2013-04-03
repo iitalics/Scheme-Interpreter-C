@@ -22,6 +22,7 @@ static const char* type_string (enum value_type v)
 		case value_bool:	return "bool";
 		case value_function:return "function";
 		case value_pair:	return "pair";
+		case value_userdata:return "userdata";
 		default: 			return "unknown";
 	}
 }
@@ -432,6 +433,8 @@ static struct value* scm_equal (int argc, struct value** argv)
 	
 	return value_create_bool(eql(argv[0], argv[1]));
 }
+
+
 
 
 // ----------------------------------------------------------------------------------- //

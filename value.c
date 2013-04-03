@@ -247,6 +247,10 @@ void value_display (struct value* value)
 			break;
 		}
 		
+		case value_userdata:
+			printf("< Userdata %p >", value_get_userdata(value));
+			break;
+		
 		default:
 			printf("< ? id #%d ? >", value->type);
 			break;

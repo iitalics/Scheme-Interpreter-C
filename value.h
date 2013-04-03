@@ -34,7 +34,10 @@ struct value* value_create_void ();
 struct value* value_create_bool (bool b);
 struct value* value_create_pair (struct value* a, struct value* b);
 struct value* value_create_string (const char* s);
-struct value* value_create_userdata (void* data, void (*destroy_func)(void*), bool autodelete);
+
+// suggested you use 'w_free' for 'destroy_func' if you just want to deallocate your memory
+struct value* value_create_userdata (void* data, void (*destroy_func)(void*));
+struct value* value_create_userdata_alloc (size_t size, void (*destroy_func)(void*), void** out);
 void value_destroy (struct value* v);
 
 struct value* value_retain (struct value* v);
@@ -48,6 +51,7 @@ struct value* value_get_tail (struct value* pair);
 bool value_get_bool (struct value* value);
 bool value_is_null (struct value* value);
 char* value_get_string (struct value* value);
+void* value_get_userdata (struct value* value);
 
 
 void value_display (struct value* value);
