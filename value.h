@@ -34,7 +34,6 @@ struct value* value_create_void ();
 struct value* value_create_bool (bool b);
 struct value* value_create_pair (struct value* a, struct value* b);
 struct value* value_create_string (const char* s);
-
 // suggested you use 'w_free' for 'destroy_func' if you just want to deallocate your memory
 struct value* value_create_userdata (void* data, void (*destroy_func)(void*));
 struct value* value_create_userdata_alloc (size_t size, void (*destroy_func)(void*), void** out);

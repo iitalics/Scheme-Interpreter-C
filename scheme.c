@@ -10,6 +10,8 @@
 
 void scheme_init ()
 {
+	//register_sdl_functions();
+	// under construction
 	register_native_functions();
 }
 void scheme_repl ()

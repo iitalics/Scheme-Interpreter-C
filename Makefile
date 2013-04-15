@@ -2,13 +2,18 @@ CC=gcc
 LINK=gcc
 
 CFLAGS=-Wall -O3
+# -Isdl/include
 LFLAGS=-O4 -lm
+# -Lsdl/lib -lSDL
 
 
 OUTPUT=scheme
 
-OBJECTS=main.o lists.o token.o tokenizer.o mem.o value.o closure.o atoken.o group-syntax.o err.o globals.o function.o native-funcs.o scheme.o userdata.o
-
+OBJECTS=main.o lists.o token.o tokenizer.o mem.o	\
+		value.o closure.o atoken.o group-syntax.o	\
+		err.o globals.o function.o native-funcs.o	\
+		scheme.o userdata.o
+		#sdl-funcs.o
 
 
 
@@ -20,4 +25,4 @@ rebuild: clean all
 
 
 $(OUTPUT): $(OBJECTS)
-	$(LINK) $(LFLAGS) $(OBJECTS) -o $(OUTPUT)
+	$(LINK) $(OBJECTS) -o $(OUTPUT) $(LFLAGS)

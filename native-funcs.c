@@ -60,14 +60,26 @@ void args_check (int argc, struct value** argv, int nargc, const enum value_type
 
 static struct value** list_items (struct value* v, int* l)
 {
+	struct value* head;
+	struct value* tail;
 	struct linked_list* ll = linked_list_create();
-	while (value_get_type(v) == value_pair)
+	
+	
+	while (v != NULL)
 	{
-		linked_list_add(ll, value_get_head(v));
-		v = value_get_tail(v);
+		if (value_get_type(v) != value_pair)
+			runtime_error("Invalid list, tails must be pairs or nil");
+		
+		head = value_get_head(v);
+		tail = value_get_tail(v);
+		
+		value_release(head);
+		value_release(tail);
+		
+		linked_list_add(ll, head);
+		v = tail;
 	}
-	if (v != NULL)
-		linked_list_add(ll, v);
+	
 	struct value** result = (struct value**)linked_list_array(ll);
 	*l = linked_list_length(ll);
 	linked_list_destroy(ll);
@@ -97,6 +109,10 @@ static struct value* scm_mult (int argc, struct value** argv)
 static struct value* scm_sub (int argc, struct value** argv)
 {
 	args_check_all(argc, argv, value_number, "-");
+	
+	if (argc == 1)
+		return value_create_number(-value_get_number(argv[0]));
+	
 	number_t n = 0;
 	int i;
 	for (i = 0; i < argc; i++) {
@@ -399,7 +415,7 @@ static struct value* scm_apply (int argc, struct value** argv)
 	args = list_items(argv[1], &length);
 	
 	struct value* result = function_apply((struct function*)argv[0], length, args);
-	free(args);
+	w_free(args);
 	return result;
 }
 static bool eql (struct value* a, struct value* b)
@@ -437,9 +453,15 @@ static struct value* scm_equal (int argc, struct value** argv)
 
 
 
+
 // ----------------------------------------------------------------------------------- //
 void register_native_functions ()
 {
+	function_register_native("string->number", scm_string_to_number);
+	function_register_native("number->string", scm_number_to_string);
+	function_register_native("string-append", scm_string_append);
+	function_register_native("string-length", scm_string_length);
+	
 	function_register_native("and", scm_and);
 	function_register_native("or", scm_or);
 	function_register_native("not", scm_not);
@@ -449,11 +471,6 @@ void register_native_functions ()
 	function_register_native("read", scm_read);
 	function_register_native("exit", scm_exit);
 	
-	function_register_native("string->number", scm_string_to_number);
-	function_register_native("number->string", scm_number_to_string);
-	function_register_native("string-append", scm_string_append);
-	function_register_native("string-length", scm_string_length);
-	
 	function_register_native("null?", scm_is_null);
 	function_register_native("boolean?", scm_is_bool);
 	function_register_native("number?", scm_is_number);
@@ -461,7 +478,7 @@ void register_native_functions ()
 	function_register_native("void?", scm_is_void);
 	function_register_native("pair?", scm_is_pair);
 	function_register_native("string?", scm_is_string);
-	function_register_native("eql?", scm_equal);
+	function_register_native("eq?", scm_equal);
 	
 	function_register_native("cons", scm_cons);
 	function_register_native("car", scm_car);
