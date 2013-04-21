@@ -65,12 +65,30 @@ static struct value* at_global_var_handler_eval (void* data, struct closure* c)
 	
 #undef name
 }
+static struct value* at_global_var_link_handler (void* link, struct closure* c)
+{
+	return value_retain(((struct global*)link)->value);
+}
+
+
 static struct atoken* atoken_global_var (const char* name)
 {
-	struct atoken* t = w_malloc(sizeof(struct atoken) + strlen(name) + 1);
-	t->data = t + 1;
-	strcpy((char*)t->data, name);
-	t->f_eval = at_global_var_handler_eval;
+	struct global* g = global_global(name);
+	struct atoken* t;
+	if (g == NULL)
+	{
+		t = w_malloc(sizeof(struct atoken) + strlen(name) + 1);
+		t->data = t + 1;
+		strcpy((char*)t->data, name);
+		t->f_eval = at_global_var_handler_eval;
+	}
+	else
+	{
+		t = w_malloc(sizeof(struct atoken));
+		t->data = g;
+		t->f_eval = at_global_var_link_handler;
+	}
+	
 	t->f_destroy = null_destroy;
 	return atoken_push(t);
 }

@@ -2,20 +2,20 @@
 #include "globals.h"
 #include "value.h"
 
-struct global
-{
-	char* name;
-	struct value* value;
-	struct global* next;
-};
-
-
 static struct global* globals = NULL;
 
 
 
 
 
+struct global* global_global (const char* name)
+{
+	struct global* g;
+	for (g = globals; g != NULL; g = g->next)
+		if (strcmp(g->name, name) == 0)
+			return g;
+	return NULL;
+}
 bool globals_get (const char* name, struct value** out)
 {
 	struct global* g;

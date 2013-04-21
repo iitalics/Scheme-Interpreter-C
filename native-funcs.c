@@ -147,6 +147,16 @@ static struct value* scm_sqrt (int argc, struct value** argv)
 	args_check(argc, argv, 1, (enum value_type[]){ value_number }, "sqrt");
 	return value_create_number(sqrt(value_get_number(argv[0])));
 }
+static struct value* scm_modulo (int argc, struct value** argv)
+{
+	args_check(argc, argv, 2, (enum value_type[]){ value_number, value_number }, "sqrt");
+	number_t a, b;
+	
+	a = value_get_number(argv[0]);
+	b = value_get_number(argv[1]);
+	
+	return value_create_number(a - ((int)(a / b)) * b);
+}
 
 
 
@@ -496,6 +506,8 @@ void register_native_functions ()
 	function_register_native("expt", scm_expt);
 	function_register_native("floor", scm_floor);
 	function_register_native("sqrt", scm_sqrt);
+	function_register_native("remainder", scm_modulo);
+	function_register_native("modulo", scm_modulo);
 	function_register_native("+", scm_add);
 	function_register_native("-", scm_sub);
 	function_register_native("*", scm_mult);

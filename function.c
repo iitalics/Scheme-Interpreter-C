@@ -59,8 +59,6 @@ static struct value* function_apply_lambda (struct function__lambda* f, int argc
 		runtime_error(q);
 	}
 	
-	//return NULL;
-	
 	struct closure* closure = closure_expand(f->closure, argc);
 	closure_set(closure, argv, argc);
 	

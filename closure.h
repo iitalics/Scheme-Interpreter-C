@@ -2,6 +2,8 @@
 
 
 struct value;
+struct atoken;
+
 
 struct closure
 {
@@ -29,3 +31,8 @@ struct closure_proto
 struct closure_proto* closure_proto_push (struct closure_proto* c, const char* name);
 struct closure_proto* closure_proto_shift (struct closure_proto* c, int num);
 int closure_proto_get (struct closure_proto* c, const char* name);
+
+
+
+
+
