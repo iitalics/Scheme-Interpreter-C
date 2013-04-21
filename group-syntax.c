@@ -259,8 +259,8 @@ bool atoken_parse_group (const char* name, int argc, struct token** argv, struct
 	}
 	if (strcmp(name, "define") == 0)
 	{
-		if (argc != 2)
-			parse_error("Expected 2 arguments to 'define' syntax");
+		if (!(argc == 1 || argc == 2))
+			parse_error("Expected 1 or 2 arguments to 'define' syntax");
 		
 		struct define_struct* s;
 		char* name;
@@ -268,6 +268,9 @@ bool atoken_parse_group (const char* name, int argc, struct token** argv, struct
 		
 		if (argv[0]->type == token_group)
 		{
+			if (argc == 1)
+				parse_error("Body required to funtion definition");
+				
 			struct token__group* group = (struct token__group*)argv[0];
 			
 			if (group->length == 0)
@@ -281,7 +284,11 @@ bool atoken_parse_group (const char* name, int argc, struct token** argv, struct
 		else if (argv[0]->type == token_symbol)
 		{
 			name = ((struct token__symbol*)argv[0])->name;
-			body = atoken_parse(argv[1], proto);
+			
+			if (argc == 1)
+				body = atoken_const(value_create_void());
+			else
+				body = atoken_parse(argv[1], proto);
 		}
 		else
 		{
