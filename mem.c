@@ -28,9 +28,12 @@ void memory_stats()
 	printf("\n"
            "    =+=  Memory stats  =+=  \n"
 	       " > Allocated: %d blocks (%d bytes)\n"
-		   " > Freed:     %d blocks\n\n",
+		   " > Freed:     %d blocks\n"
+		   " > Left:      %d blocks\n"
+		   "\n",
 		stats_alloc, stats_alloc_b,
-		stats_freed);
+		stats_freed,
+		stats_alloc - stats_freed);
 }
 
 

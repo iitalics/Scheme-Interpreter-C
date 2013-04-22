@@ -46,12 +46,7 @@ void function_register_native (char* name, struct value* (*func)(int, struct val
 
 
 
-
-static inline struct value* function_apply_native (struct function__native* f, int argc, struct value** argv)
-{
-	return f->func(argc, argv);
-}
-static struct value* function_apply_lambda (struct function__lambda* f, int argc, struct value** argv)
+void function_check_arguments (struct function__lambda* f, int argc)
 {
 	if (argc != f->nargs)
 	{
@@ -59,13 +54,41 @@ static struct value* function_apply_lambda (struct function__lambda* f, int argc
 		sprintf(q, "Expected %d arguments to lambda function, got %d", f->nargs, argc);
 		runtime_error(q);
 	}
+}
+
+static inline struct value* function_apply_native (struct function__native* f, int argc, struct value** argv)
+{
+	return f->func(argc, argv);
+}
+static inline struct value* function_apply_lambda (struct function__lambda* f, int argc, struct value** argv)
+{
+	function_check_arguments(f, argc);
 	
+	struct value* result = NULL;
 	struct closure* closure = closure_expand(f->closure, argc);
 	closure_set(closure, argv, argc);
 	
-	struct value* result = atoken_evaluate(f->body, closure);
+	struct closure_fold* fold = &closure->fold;
+	
+	fold->did_fold = false;
+	fold->vals = NULL;
+	fold->func = f;
+	fold->disable = false;
+	
+	result = atoken_evaluate(f->body, closure);
+	
+	while (fold->did_fold)
+	{
+		closure_set_release(closure, fold->vals, argc);
+		fold->did_fold = false;
+		
+		result = atoken_evaluate(f->body, closure);
+	}
 	
 	closure_destroy(closure);
+	
+	if (fold->vals != NULL)
+		w_free(fold->vals);
 	
 	return result;
 }

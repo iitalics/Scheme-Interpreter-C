@@ -41,6 +41,7 @@ extern void register_sdl_functions ();
 extern void args_check_all (int argc, struct value** argv, enum value_type type, const char* name);
 extern void args_check (int argc, struct value** argv, int nargc, const enum value_type* types, const char* name);
 
+void function_check_arguments (struct function__lambda* f, int argc);
 struct value* function_apply (struct function* f, int argc, struct value** argv);
 //struct value* function_apply (struct function* f, int argc, struct value** argv);
 //#define function_apply(f,a,v) function_apply_closure(f,a,v,NULL)

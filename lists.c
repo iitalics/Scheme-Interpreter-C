@@ -2,6 +2,25 @@
 #include "lists.h"
 
 
+// !!!!!!!! STR_BUFFER DOES NOT USE W_MALLOC AND W_FREE !!!!!!!!!!!!!!!
+
+
+
+/* usage:
+
+{
+	struct str_buffer buffer[1];
+	str_buffer_init(buffer);
+	
+	str_buffer_append(buffer, "Hello, world");
+	str_buffer_add(buffer, '!');
+	
+	puts(buffer->str);
+	
+	free(buffer->str);
+}
+
+*/
 
 void str_buffer_init (struct str_buffer* b)
 {
@@ -39,6 +58,7 @@ void str_buffer_clear (struct str_buffer* b)
 
 
 
+// linked_list does
 struct linked_list* linked_list_create ()
 {
 	struct linked_list* list = w_malloc(sizeof(struct linked_list));

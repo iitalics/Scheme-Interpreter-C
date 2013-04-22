@@ -96,7 +96,7 @@ static struct atoken* atoken_global_var (const char* name)
 
 
 
-/////////////////////////////////////////////////// var //////////////////////////////////////////////////
+/////////////////////////////////////////////////// function //////////////////////////////////////////////////
 struct function_call
 {
 	struct atoken* func;
@@ -105,23 +105,50 @@ struct function_call
 };
 static struct value* function_call_eval (struct function_call* f, struct closure* c)
 {
-	
 	struct value* func = atoken_evaluate(f->func, c);
 	
 	if (func->type != value_function)
 		runtime_error("Cannot apply non-function value");
 	
-	struct value* result;
 	int i;
+	struct value* result;
 	struct value* args[f->argc];
+	bool folding = (c != NULL && c->fold.func == (struct function__lambda*)func && !c->fold.disable);
+	bool disabled = false;
+	
+	if (!folding && c != NULL)
+	{
+		c->fold.disable = true;
+		disabled = true;
+	}
+	
 	
 	for (i = 0; i < f->argc; i++)
+	{
 		args[i] = atoken_evaluate(f->argv[i], c);
+		if (disabled)
+			c->fold.disable = true;
+	}
 	
-	result = function_apply((struct function*)func, f->argc, args);
 	
-	for (i = 0; i < f->argc; i++)
-		value_release(args[i]);
+	
+	if (folding)
+	{
+		closure_fold_set_arguments(c, f->argc, args);
+		c->fold.did_fold = true;
+		
+		result = NULL; // value discarded anyways
+	}
+	else
+	{
+		result = function_apply((struct function*)func, f->argc, args);
+		for (i = 0; i < f->argc; i++)
+			value_release(args[i]);
+	}
+	
+	if (disabled)
+		c->fold.disable = false;
+	
 	value_release(func);
 	
 	return result;
@@ -243,6 +270,8 @@ struct atoken* atoken_parse (struct token* token, struct closure_proto* proto)
 				struct atoken* out;
 				if (atoken_parse_group(((struct token__symbol*)group->items[0])->name, group->length - 1, group->items + 1, proto, &out))
 					return out;
+					
+				// fall through
 			}
 			
 			// function call
@@ -253,6 +282,10 @@ struct atoken* atoken_parse (struct token* token, struct closure_proto* proto)
 			
 			return atoken_function_call(args, group->length);
 		}
+		
+		case token_rparen:
+			parse_error("Encountered unexpected ')'");
+			break;
 		
 		default:
 			break;

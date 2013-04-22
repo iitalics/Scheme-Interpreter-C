@@ -3,7 +3,7 @@ LINK=gcc
 
 CFLAGS=-Wall -O3
 # -Isdl/include
-LFLAGS=-O4 -lm
+LFLAGS=-O4 -lm -s
 # -Lsdl/lib -lSDL
 
 

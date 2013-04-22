@@ -1,6 +1,7 @@
 #include "include.h"
 #include "closure.h"
 #include "value.h"
+#include "function.h"
 
 struct closure* closure_expand (struct closure* c, int add)
 {
@@ -13,7 +14,7 @@ struct closure* closure_expand (struct closure* c, int add)
 	struct closure* n = w_malloc(sizeof(struct closure) + (s + add) * sizeof(struct value*));
 	n->vals = (struct value**)(n + 1);
 	n->size = s + add;
-	
+	n->fold.func = NULL;
 	
 	for (i = 0; i < add; i++)
 		n->vals[i] = NULL;
@@ -28,6 +29,15 @@ void closure_set (struct closure* c, struct value** vals, int len)
 	int i;
 	for (i = 0; i < len; i++)
 		c->vals[i] = value_retain(vals[i]);
+}
+void closure_set_release (struct closure* c, struct value** vals, int len)
+{
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		value_release(c->vals[i]);
+		c->vals[i] = vals[i];
+	}
 }
 void closure_destroy (struct closure* c)
 {
@@ -73,4 +83,18 @@ int closure_proto_get (struct closure_proto* c, const char* name)
 		if (strcmp(c->name, name) == 0)
 			return i;
 	return -1;
+}
+
+
+
+void closure_fold_set_arguments (struct closure* c, int argc, struct value** vals)
+{
+	function_check_arguments(c->fold.func, argc);
+	
+	if (c->fold.vals == NULL)
+		c->fold.vals = w_malloc(argc * sizeof(struct value*));
+	
+	int i;
+	for (i = 0; i < argc; i++)
+		c->fold.vals[i] = vals[i];
 }

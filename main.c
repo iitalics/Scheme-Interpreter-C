@@ -8,7 +8,7 @@
 
 static void repl ()
 {
-	fprintf(stderr, "\n  ~=+ Scheme REPL v1.0 +=~\n\n");
+	fprintf(stderr, "\n  ~=+ Scheme REPL v1.1 +=~\n\n");
 	
 	scheme_init();
 	
