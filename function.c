@@ -17,6 +17,7 @@ struct function* function_create_lambda (int nargs, struct atoken* body, struct 
 {
 	struct function__lambda* lambda = value_create(value_function, sizeof(struct function__lambda));
 	lambda->_base.native = false;
+	lambda->_base.name = NULL;
 	
 	lambda->nargs = nargs;
 	lambda->body = body;
@@ -30,8 +31,8 @@ struct function* function_create_native (char* name, struct value* (*func)(int, 
 {
 	struct function__native* f = value_create(value_function, sizeof(struct function__native) + strlen(name) + 1);
 	f->_base.native = true;
-	f->name = (char*)(f + 1);
-	strcpy(f->name, name);
+	f->_base.name = (char*)(f + 1);
+	strcpy(f->_base.name, name);
 	f->func = func;
 	return &f->_base;
 }

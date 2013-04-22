@@ -193,10 +193,12 @@ void value_display (struct value* value)
 			
 		case value_function:
 		{
-			if (((struct function*)value)->native)
-				printf("< Native function '%s' >", ((struct function__native*)value)->name);
+			struct function* f = (struct function*)value;
+			const char* type = f->native ? "Native function" : "Lambda function";
+			if (f->name == NULL)
+				printf("< %s >", type);
 			else
-				printf("< Lambda function >");
+				printf("< %s '%s' >", type, f->name);
 			break;
 		}
 		

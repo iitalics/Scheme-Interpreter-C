@@ -10,6 +10,7 @@ struct function
 {
 	struct value _base;
 	bool native;
+	char* name;
 };
 
 
@@ -25,7 +26,6 @@ struct function__native
 {
 	struct function _base;
 	
-	char* name;
 	struct value* (*func)(int, struct value**);
 };
 

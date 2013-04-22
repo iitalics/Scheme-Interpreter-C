@@ -5,12 +5,15 @@ struct value; struct closure; struct token; struct closure_proto;
 
 
 
+typedef struct value* (*atoken_eval_function)(void*, struct closure*);
+typedef void (*atoken_destroy_function)(void*);
+
 struct atoken
 {
 	void* data;
 	
-	struct value* (*f_eval)(void*, struct closure*);
-	void (*f_destroy)(void*);
+	atoken_eval_function f_eval;
+	atoken_destroy_function f_destroy;
 	
 	struct atoken* next;
 };

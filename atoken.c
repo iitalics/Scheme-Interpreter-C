@@ -8,6 +8,9 @@
 
 
 
+#define CACHE_GLOBAL_LINK
+
+
 static void null_destroy (void* data) {}
 
 
@@ -15,20 +18,14 @@ static void null_destroy (void* data) {}
 
 /////////////////////////////////////////////////// const //////////////////////////////////////////////////
 
-static struct value* at_const_handler_eval (void* data, struct closure* c)
-{
-	return value_retain((struct value*)data);
-}
-static void at_const_handler_destroy (void* data)
-{
-	value_release((struct value*)data);
-} 
+
 struct atoken* atoken_const (struct value* value)
 {
 	struct atoken* t = w_malloc(sizeof(struct atoken));
 	t->data = value;
-	t->f_eval = at_const_handler_eval;
-	t->f_destroy = at_const_handler_destroy;
+	t->f_eval = (atoken_eval_function)value_retain;//at_const_handler_eval;			--> this one is pretty hacky
+	t->f_destroy = (atoken_destroy_function)value_release;//at_const_handler_destroy;
+	
 	return atoken_push(t);
 }
 
@@ -65,16 +62,20 @@ static struct value* at_global_var_handler_eval (void* data, struct closure* c)
 	
 #undef name
 }
-static struct value* at_global_var_link_handler (void* link, struct closure* c)
+static struct value* at_global_var_link_handler (struct value** value, struct closure* c)
 {
-	return value_retain(((struct global*)link)->value);
+	return value_retain(*value);
 }
+
+
+
 
 
 static struct atoken* atoken_global_var (const char* name)
 {
 	struct global* g = global_global(name);
 	struct atoken* t;
+	
 	if (g == NULL)
 	{
 		t = w_malloc(sizeof(struct atoken) + strlen(name) + 1);
@@ -85,8 +86,8 @@ static struct atoken* atoken_global_var (const char* name)
 	else
 	{
 		t = w_malloc(sizeof(struct atoken));
-		t->data = g;
-		t->f_eval = at_global_var_link_handler;
+		t->data = &g->value;
+		t->f_eval = (atoken_eval_function)at_global_var_link_handler;
 	}
 	
 	t->f_destroy = null_destroy;
@@ -102,12 +103,8 @@ struct function_call
 	int argc;
 	struct atoken** argv;
 };
-static struct value* function_call_eval (void* _f, struct closure* c)
+static struct value* function_call_eval (struct function_call* f, struct closure* c)
 {
-//return value_create_nil();
-
-
-	struct function_call* f = _f; // why.jpg
 	
 	struct value* func = atoken_evaluate(f->func, c);
 	
@@ -144,7 +141,7 @@ static struct atoken* atoken_function_call (struct atoken** args, int nargs)
 	for (i = 0; i < argc; i++)
 		f->argv[i] = args[i + 1];
 	
-	t->f_eval = function_call_eval;
+	t->f_eval = (atoken_eval_function)function_call_eval;
 	t->f_destroy = null_destroy;
 	
 	return atoken_push(t);

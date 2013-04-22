@@ -12,6 +12,48 @@
  */
 
 
+
+static bool is_list (struct value* v)
+{
+	while (v != NULL)
+	{
+		if (value_get_type(v) != value_pair)
+			return false;
+		
+		value_release(v = value_get_tail(v));
+	}
+	return true;
+}
+
+
+#ifdef UNSAFE_FAST
+void args_check_all(int c, struct value** v, enum value_type t, const char* n) {}
+void args_check (int argc, struct value** argv, int nargc, const enum value_type* types, const char* name) {}
+#else
+
+static bool is_type (struct value* v, enum value_type type)
+{
+	switch (type)
+	{
+		case value_list:
+			return is_list(v);
+		
+		case value_any:
+			return true;
+		
+		case value_integer:
+		{
+			if (value_get_type(v) != value_number)
+				return false;
+			number_t a = value_get_number(v);
+			return (a - (int)a) == 0;
+		}
+		
+		default:
+			return value_get_type(v) == type;
+	}
+}
+
 static const char* type_string (enum value_type v)
 {
 	switch (v)
@@ -23,17 +65,18 @@ static const char* type_string (enum value_type v)
 		case value_function:return "function";
 		case value_pair:	return "pair";
 		case value_userdata:return "userdata";
+		case value_string:	return "string";
+		case value_list:	return "list";
+		case value_integer:	return "integer";
 		default: 			return "unknown";
 	}
 }
-
-
 void args_check_all (int argc, struct value** argv, enum value_type type, const char* name)
 {
 	char q[128];
 	int i;
 	for (i = 0; i < argc; i++)
-		if (value_get_type(argv[i]) != type)
+		if (!is_type(argv[i], type))//value_get_type(argv[i]) != type)
 		{
 			snprintf(q, 128, "Expected arguments to '%s' to be of type %s, got %s",
 				name, type_string(type), type_string(value_get_type(argv[i])));
@@ -50,20 +93,20 @@ void args_check (int argc, struct value** argv, int nargc, const enum value_type
 	}
 	int i;
 	for (i = 0; i < argc; i++)
-		if (types[i] != value_any && types[i] != value_get_type(argv[i]))
+		if (!is_type(argv[i], types[i]))
 		{
 			snprintf(q, 128, "Expected argument #%d to '%s' to be of type %s, got %s",
 				i + 1, name, type_string(types[i]), type_string(value_get_type(argv[i])));
 			runtime_error(q);
 		}
 }
+#endif
 
 static struct value** list_items (struct value* v, int* l)
 {
 	struct value* head;
 	struct value* tail;
 	struct linked_list* ll = linked_list_create();
-	
 	
 	while (v != NULL)
 	{
@@ -126,7 +169,7 @@ static struct value* scm_sub (int argc, struct value** argv)
 static struct value* scm_div (int argc, struct value** argv)
 {
 	args_check_all(argc, argv, value_number, "/");
-	number_t n = 0;
+	number_t n = 1;
 	int i;
 	for (i = 0; i < argc; i++) {
 		if (i == 0)
@@ -259,6 +302,13 @@ static struct value* scm_is_integer (int argc, struct value** argv)
 	number_t n = value_get_number(argv[0]);
 	
 	return value_create_bool(n == (int)n);
+}
+
+
+static struct value* scm_is_list (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_any }, "list?");
+	return value_create_bool(is_list(argv[0]));
 }
 
 
@@ -415,11 +465,40 @@ static struct value* scm_string_length (int argc, struct value** argv)
 	args_check(argc, argv, 1, (enum value_type[]){ value_string }, "string-length");
 	return value_create_number(strlen(value_get_string(argv[0])));
 }
+static struct value* scm_substring (int argc, struct value** argv)
+{
+	enum value_type targs[] = { value_string, value_integer, value_integer };
+	if (argc == 3)
+		args_check(argc, argv, 3, targs, "substring");
+	else
+		args_check(argc, argv, 2, targs, "substring");
+		
+	char* s;
+	int start, len = -1;
+	struct value* result;
+	
+	s = value_get_string(argv[0]);
+	start = (int)value_get_number(argv[1]);
+	if (argc == 3)
+		len = (int)value_get_number(argv[2]);
+	
+	if (len < 0 || (start + len) > strlen(s))
+		len = strlen(s) - start;
+	
+	char* out = w_malloc(len + 1);
+	strncpy(out, s + start, len);
+	out[len] = '\0';
+	
+	result = value_create_string(out);
+	
+	w_free(out);
+	return result;
+}
 
 
 static struct value* scm_apply (int argc, struct value** argv)
 {
-	args_check(argc, argv, 2, (enum value_type[]){ value_function, value_pair }, "apply");
+	args_check(argc, argv, 2, (enum value_type[]){ value_function, value_list }, "apply");
 	int length;
 	struct value** args;
 	args = list_items(argv[1], &length);
@@ -450,13 +529,20 @@ static bool eql (struct value* a, struct value* b)
 			return false;
 	}
 }
-static struct value* scm_equal (int argc, struct value** argv)
+static struct value* scm_is_equal (int argc, struct value** argv)
 {
-	args_check(argc, argv, 2, (enum value_type[]){ value_any, value_any }, "eql?");
+	args_check(argc, argv, 2, (enum value_type[]){ value_any, value_any }, "equal?");
 	
 	if (value_get_type(argv[0]) != value_get_type(argv[1]))
 		return value_create_bool(false);
+	return value_create_bool(eql(argv[0], argv[1]));
+}
+static struct value* scm_is_eq (int argc, struct value** argv)
+{
+	args_check(argc, argv, 2, (enum value_type[]){ value_any, value_any }, "eq?");
 	
+	if (value_get_type(argv[0]) != value_get_type(argv[1]))
+		return value_create_bool(false);
 	return value_create_bool(eql(argv[0], argv[1]));
 }
 
@@ -471,6 +557,7 @@ void register_native_functions ()
 	function_register_native("number->string", scm_number_to_string);
 	function_register_native("string-append", scm_string_append);
 	function_register_native("string-length", scm_string_length);
+	function_register_native("substring", scm_substring);
 	
 	function_register_native("and", scm_and);
 	function_register_native("or", scm_or);
@@ -487,8 +574,10 @@ void register_native_functions ()
 	function_register_native("integer?", scm_is_integer);
 	function_register_native("void?", scm_is_void);
 	function_register_native("pair?", scm_is_pair);
+	function_register_native("list?", scm_is_list);
 	function_register_native("string?", scm_is_string);
-	function_register_native("eq?", scm_equal);
+	function_register_native("eq?", scm_is_eq);
+	function_register_native("equal?", scm_is_equal);
 	
 	function_register_native("cons", scm_cons);
 	function_register_native("car", scm_car);

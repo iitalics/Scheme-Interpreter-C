@@ -13,7 +13,10 @@ enum value_type
 	value_string = 6,
 	value_userdata = 7,
 	
-	value_any = -1
+	// 'fake' types
+	value_any = -1,
+	value_list = -2,
+	value_integer = -3,
 };
 
 
