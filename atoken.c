@@ -226,7 +226,7 @@ void atoken_destroy_all ()
 static bool const_value (const char* name, struct value** out)
 {
 	if (strcmp(name, "#t") == 0) { *out = value_create_bool(true); return true; }
-	if (strcmp(name, "#f") == 0) { *out = value_create_bool(true); return true; }
+	if (strcmp(name, "#f") == 0) { *out = value_create_bool(false); return true; }
 	if (strcmp(name, "#void") == 0) { *out = value_create_void(); return true; }
 	//if (strcmp(name, "nil") == 0) { *out = NULL; return true; }
 	return false;
