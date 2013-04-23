@@ -1,12 +1,7 @@
 (define @matrix-w)
 (define @matrix-h)
 
-(define (for-each A f)
-  (if (null? A)
-      #!void
-      (do (f (car A))
-          (for-each (cdr A)
-                    f))))
+
 
 (define (repeat f times)
   (if (<= times 0)
@@ -50,10 +45,11 @@
       "[]"))
 
 (define (matrix-display M)
-  (for-each M (lambda (row)
+  (for-each (lambda (row)
                       (do (display (apply string-append
                                           (map matrix-tile row)))
-                          (newline)))))
+                          (newline)))
+            M))
 ;
 
 
@@ -94,8 +90,7 @@
       (update-life)))
 
 
-(define @matrix-w 10)
-(define @matrix-h 8)
+
 
 (define *matrix-life '((1 0 1 0 0 0 0 0 0 0)
                        (0 1 1 0 0 0 0 0 0 0)
@@ -105,5 +100,9 @@
                        (0 0 0 0 0 0 0 1 0 0)
                        (0 0 0 0 0 0 0 1 0 0)
                        (0 0 0 0 0 0 0 0 0 0)))
-;
+
+
+(define @matrix-w (length (car *matrix-life)))
+(define @matrix-h (length *matrix-life))
+
 (repeat life 18)

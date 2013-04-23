@@ -279,7 +279,13 @@ bool atoken_parse_group (const char* name, int argc, struct token** argv, struct
 	if (strcmp(name, "if") == 0)
 	{
 		if (argc != 3)
+		{
+			int i;
+			for (i = 0; i < argc; i++)
+				token_display(argv[i], 2);
+			
 			parse_error("Expected 3 arguments to 'if' syntax");
+		}
 			
 		struct if_struct* s;
 		result = create_atoken(sizeof(struct if_struct), (void**)&s);

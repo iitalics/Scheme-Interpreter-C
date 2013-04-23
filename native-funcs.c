@@ -626,6 +626,22 @@ static struct value* scm_map (int argc, struct value** argv)
 	return pair;
 }
 
+static struct value* scm_append (int argc, struct value** argv)
+{
+	args_check(argc, argv, 2, (enum value_type[]){ value_list, value_list }, "append");
+	
+	int length, i;
+	struct value** items =  list_items(argv[0], &length);
+	struct value* pair = value_retain(argv[1]);
+	
+	for (i = length; i-- > 0; )
+		pair = value_create_pair(value_retain(items[i]), pair);
+	
+	w_free(items);
+	
+	return pair;
+}
+
 static struct value* scm_reverse (int argc, struct value** argv)
 {
 	args_check(argc, argv, 1, (enum value_type[]){ value_list }, "reverse");
@@ -662,6 +678,23 @@ static struct value* scm_list_ref (int argc, struct value** argv)
 			return value_get_head(v);
 		else
 			i--;
+	
+	return value_create_void();
+}
+static struct value* scm_for_each (int argc, struct value** argv)
+{
+	args_check(argc, argv, 2, (enum value_type[]){ value_function, value_list }, "for-each");
+	struct value* v;
+	
+	struct value* f_args;
+	
+	for (v = argv[1]; v != NULL; value_release(v = value_get_tail(v)))
+	{
+		f_args = value_get_head(v);
+		value_release(function_apply((struct function*)argv[0], 1, &f_args));
+		
+		value_release(f_args);
+	}
 	
 	return value_create_void();
 }
@@ -708,6 +741,8 @@ void register_native_functions ()
 	function_register_native("reverse", scm_reverse);
 	function_register_native("length", scm_length);
 	function_register_native("list-ref", scm_list_ref);
+	function_register_native("for-each", scm_for_each);
+	function_register_native("append", scm_append);
 	
 	function_register_native("string->number", scm_string_to_number);
 	function_register_native("number->string", scm_number_to_string);

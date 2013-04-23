@@ -173,21 +173,16 @@ char read_escape_char ()
 
 static char* read_quoted_string ()
 {
-	char quote = t_read();
+	t_read();
 	char c;
 	
 	struct str_buffer buffer[1];
 	str_buffer_init(buffer);
 	
-	while ((c = t_read()) != quote)
+	while ((c = t_read()) != '"')
 	{
 		if (t_eof())
-		{
-			//
-			char q[] = "Reached EOF before closing Q";
-			q[27] = quote;
-			tokens_error(q);
-		}
+			tokens_error("Reached EOF before closing \"");
 		
 		if (c == '\\')
 			c = read_escape_char();
@@ -252,7 +247,11 @@ start:
 		case '\'':
 		{
 			t_read();
-			return tokens_create_quote(tokenizer_next());
+			struct token* q = tokenizer_next();
+			if (q == NULL)
+				tokens_error("Expected token after '");
+			
+			return tokens_create_quote(q);
 		}
 		
 		default:
