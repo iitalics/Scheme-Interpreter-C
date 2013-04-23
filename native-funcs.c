@@ -456,16 +456,32 @@ static struct value* scm_string_to_number (int argc, struct value** argv)
 }
 static struct value* scm_string_append (int argc, struct value** argv)
 {
-	args_check(argc, argv, 2, (enum value_type[]){ value_string, value_string }, "string-append");
+	//args_check(argc, argv, 2, (enum value_type[]){ value_string, value_string }, "string-append");
+	args_check_all(argc, argv, value_string, "string-append");
 	
-	char* a = value_get_string(argv[0]);
-	char* b = value_get_string(argv[1]);
-	char out[strlen(a) + strlen(b) + 1];
+	if (argc == 0)
+		return value_create_string("");
 	
-	strcpy(out, a);
-	strcpy(out + strlen(a), b);
+	char* strings[argc];
+	int i, len = 0, x;
 	
-	return value_create_string(out);
+	for (i = 0; i < argc; i++)
+	{
+		strings[i] = value_get_string(argv[i]);
+		len += strlen(strings[i]);
+	}
+	
+	char* out = w_malloc(len + 1);
+	
+	for (i = x = 0; i < argc; i++)
+	{
+		strcpy(out + x, strings[i]);
+		x += strlen(strings[i]);
+	}
+	out[x] = '\0';
+	struct value* s = value_create_string(out);
+	w_free(out);
+	return s;
 }
 static struct value* scm_string_length (int argc, struct value** argv)
 {

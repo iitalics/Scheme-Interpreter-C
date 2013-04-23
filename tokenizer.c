@@ -163,6 +163,7 @@ char read_escape_char ()
 		case 't': return '\t';
 		case '\"': return '\"';
 		case '\'': return '\'';
+		case '\\': return '\\';
 		
 		default:
 			tokens_error("Unrecognized escape sequence");
