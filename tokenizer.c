@@ -261,7 +261,7 @@ start:
 			
 			struct token* token;
 			
-			if (isdigit(block[0]) || block[0] == '.' || (block[0] == '-' && block[1]))
+			if (isdigit(block[0]) || block[0] == '.' || ((block[0] == '-' || block[0] == '+') && block[1]))
 				token = tokens_create_number(atof(block));
 			else
 				token = tokens_create_symbol(block);

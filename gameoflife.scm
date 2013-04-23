@@ -10,7 +10,7 @@
 
 (define (for-each A f)
   (if (null? A)
-      #void
+      #!void
       (do (f (car A))
           (for-each (cdr A)
                     f))))
@@ -33,7 +33,7 @@
   (map~ A f '()))
 (define (repeat f times)
   (if (<= times 0)
-      #void
+      #!void
       (do (f)
           (repeat f (- times 1)))))
 

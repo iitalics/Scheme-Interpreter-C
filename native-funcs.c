@@ -581,6 +581,28 @@ static struct value* scm_is_eq (int argc, struct value** argv)
 }
 
 
+static struct value* scm_log (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_number }, "log");
+	return value_create_number(log(value_get_number(argv[0])));
+}
+static struct value* scm_cos (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_number }, "cos");
+	return value_create_number(cos(value_get_number(argv[0])));
+}
+static struct value* scm_sin (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_number }, "sin");
+	return value_create_number(sin(value_get_number(argv[0])));
+}
+static struct value* scm_atan (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_number }, "atan");
+	return value_create_number(atan(value_get_number(argv[0])));
+}
+
+
 
 
 
@@ -634,8 +656,16 @@ void register_native_functions ()
 	function_register_native("sqrt", scm_sqrt);
 	function_register_native("remainder", scm_modulo);
 	function_register_native("modulo", scm_modulo);
+	function_register_native("log", scm_log);
+	function_register_native("sin", scm_sin);
+	function_register_native("cos", scm_cos);
+	function_register_native("atan", scm_atan);
 	function_register_native("+", scm_add);
 	function_register_native("-", scm_sub);
 	function_register_native("*", scm_mult);
 	function_register_native("/", scm_div);
+	
+	
+	globals_set("PI", value_create_number(M_PI));
+	globals_set("E", value_create_number(M_E));
 }

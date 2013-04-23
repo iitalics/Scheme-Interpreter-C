@@ -261,14 +261,16 @@ void value_display (struct value* value)
 			putchar('"');
 			for (i = 0, len = strlen(str); i < len; i++)
 			{
-				if (str[i] == '"')
-					putchar('\\');
-				else if (str[i] == '\n')
+				switch (str[i])
 				{
-					printf("\\n");
-					continue;
+					case '"': printf("\\\""); break;
+					case '\n': printf("\\n"); break;
+					case '\r': printf("\\r"); break;
+					case '\'': printf("\\'"); break;
+					default:
+						putchar(str[i]);
+						break;
 				}
-				putchar(str[i]);
 			}
 			putchar('"');
 			break;
