@@ -219,6 +219,51 @@ void atoken_destroy_all ()
 	atoken_all = NULL;
 }
 
+static bool const_value (const char* name, struct value** out)
+{
+	if (strcmp(name, "#t") == 0) { *out = value_create_bool(true); return true; }
+	if (strcmp(name, "#f") == 0) { *out = value_create_bool(true); return true; }
+	if (strcmp(name, "#void") == 0) { *out = value_create_void(); return true; }
+	//if (strcmp(name, "nil") == 0) { *out = NULL; return true; }
+	return false;
+}
+
+struct value* value_quote_token (struct token* token)
+{
+	switch (token->type)
+	{
+		case token_number:
+			return value_create_number(((struct token__number*)token)->value);
+		
+		case token_string:
+			return value_create_string(((struct token__string*)token)->str);
+		
+		case token_symbol:
+		{
+			struct value* v;
+			if (const_value(((struct token__symbol*)token)->name, &v))
+				return v;
+			else
+				return value_create_symbol(((struct token__symbol*)token)->name);
+		}
+			
+		case token_group:
+		{
+			struct token__group* group = (struct token__group*)token;
+			int i;
+			struct value* pair = NULL;
+			for (i = group->length; i-- > 0;)
+				pair = value_create_pair(value_quote_token(group->items[i]), pair);
+			
+			return pair;
+		}
+		
+		case token_quote:
+			return value_create_quote(value_quote_token(((struct token__quote*)token)->token));
+		
+		default: return NULL;
+	}
+}
 
 
 
@@ -242,14 +287,9 @@ struct atoken* atoken_parse (struct token* token, struct closure_proto* proto)
 		{
 			const char* name = ((struct token__symbol*)token)->name;
 			
-			if (strcmp(name, "#t") == 0)
-				return atoken_const(value_create_bool(true));
-			if (strcmp(name, "#f") == 0)
-				return atoken_const(value_create_bool(false));
-			if (strcmp(name, "#void") == 0)
-				return atoken_const(value_create_void());
-			if (strcmp(name, "nil") == 0)
-				return atoken_const(value_create_nil());
+			struct value* c;
+			if (const_value(name, &c))
+				return atoken_const(c);
 				
 			int i = closure_proto_get(proto, name);
 			if (i != -1)
@@ -282,6 +322,10 @@ struct atoken* atoken_parse (struct token* token, struct closure_proto* proto)
 			
 			return atoken_function_call(args, group->length);
 		}
+		
+		case token_quote:
+			return atoken_const(value_quote_token(((struct token__quote*)token)->token));
+		
 		
 		case token_rparen:
 			parse_error("Encountered unexpected ')'");

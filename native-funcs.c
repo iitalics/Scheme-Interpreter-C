@@ -68,6 +68,8 @@ static const char* type_string (enum value_type v)
 		case value_string:	return "string";
 		case value_list:	return "list";
 		case value_integer:	return "integer";
+		case value_symbol:	return "symbol";
+		case value_quote:	return "quote";
 		default: 			return "unknown";
 	}
 }
@@ -78,7 +80,7 @@ void args_check_all (int argc, struct value** argv, enum value_type type, const 
 	for (i = 0; i < argc; i++)
 		if (!is_type(argv[i], type))//value_get_type(argv[i]) != type)
 		{
-			snprintf(q, 128, "Expected arguments to '%s' to be of type %s, got %s",
+			snprintf(q, 128, "Expected argument to '%s' to be of type %s, got %s",
 				name, type_string(type), type_string(value_get_type(argv[i])));
 			runtime_error(q);
 		}
@@ -292,6 +294,11 @@ static struct value* scm_is_string (int argc, struct value** argv)
 	args_check(argc, argv, 1, (enum value_type[]){ value_any }, "string?");
 	return value_create_bool(value_get_type(argv[0]) == value_string);
 }
+static struct value* scm_is_symbol (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_any }, "symbol?");
+	return value_create_bool(value_get_type(argv[0]) == value_symbol);
+}
 static struct value* scm_is_integer (int argc, struct value** argv)
 {
 	args_check(argc, argv, 1, (enum value_type[]){ value_any }, "integer?");
@@ -328,12 +335,12 @@ static struct value* scm_cons (int argc, struct value** argv)
 }
 static struct value* scm_car (int argc, struct value** argv)
 {
-	args_check(argc, argv, 1, (enum value_type[]){ value_pair }, "cat");
+	args_check(argc, argv, 1, (enum value_type[]){ value_pair }, "car");
 	return value_get_head(argv[0]);
 }
 static struct value* scm_cdr (int argc, struct value** argv)
 {
-	args_check(argc, argv, 1, (enum value_type[]){ value_pair }, "cat");
+	args_check(argc, argv, 1, (enum value_type[]){ value_pair }, "cdr");
 	return value_get_tail(argv[0]);
 }
 static struct value* scm_list (int argc, struct value** argv)
@@ -494,6 +501,16 @@ static struct value* scm_substring (int argc, struct value** argv)
 	w_free(out);
 	return result;
 }
+static struct value* scm_string_to_symbol (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_string }, "string->symbol");
+	return value_create_symbol(value_get_string(argv[0]));
+}
+static struct value* scm_symbol_to_string (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_symbol }, "symbol->string");
+	return value_create_string(value_get_symbol_name(argv[0]));
+}
 
 
 static struct value* scm_apply (int argc, struct value** argv)
@@ -523,6 +540,7 @@ static bool eql (struct value* a, struct value* b)
 			return eql(value_get_head(a), value_get_head(b)) && eql(value_get_tail(a), value_get_tail(b));
 			
 		case value_string:
+		case value_symbol: // hax
 			return strcmp(value_get_string(a), value_get_string(b)) == 0;
 			
 		default:
@@ -555,6 +573,8 @@ void register_native_functions ()
 {
 	function_register_native("string->number", scm_string_to_number);
 	function_register_native("number->string", scm_number_to_string);
+	function_register_native("string->symbol", scm_string_to_symbol);
+	function_register_native("symbol->string", scm_symbol_to_string);
 	function_register_native("string-append", scm_string_append);
 	function_register_native("string-length", scm_string_length);
 	function_register_native("substring", scm_substring);
@@ -574,6 +594,7 @@ void register_native_functions ()
 	function_register_native("integer?", scm_is_integer);
 	function_register_native("void?", scm_is_void);
 	function_register_native("pair?", scm_is_pair);
+	function_register_native("symbol?", scm_is_symbol);
 	function_register_native("list?", scm_is_list);
 	function_register_native("string?", scm_is_string);
 	function_register_native("eq?", scm_is_eq);

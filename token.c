@@ -14,7 +14,7 @@ struct token* token_create_number (number_t value)
 }
 struct token* token_create_symbol (const char* name)
 {
-	struct token__symbol* n = w_malloc(sizeof(struct token__number) + strlen(name) + 1);
+	struct token__symbol* n = w_malloc(sizeof(struct token__symbol) + strlen(name) + 1);
 	n->_base.type = token_symbol;
 	n->_base.next = NULL;
 	n->name = (char*)(n + 1);
@@ -43,12 +43,20 @@ struct token* token_create_group (struct linked_list* litems)
 		g->items[i] = (struct token*)litems->next->data;
 	return &g->_base;
 }
+struct token* token_create_quote (struct token* t)
+{
+	struct token__quote* n = w_malloc(sizeof(struct token__quote));
+	n->_base.type = token_quote;
+	n->_base.next = NULL;
+	n->token = t;
+	return &n->_base;
+}
 
-
+/*
 void token_destroy (struct token* t)
 {
 	w_free(t);
-}
+}*/
 
 
 void token_display (struct token* t, int indent)

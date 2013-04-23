@@ -1,7 +1,7 @@
 CC=gcc
 LINK=gcc
 
-CFLAGS=-Wall -O3
+CFLAGS=-Wall -O3 -DWATCH_MEMORY
 # -Isdl/include
 LFLAGS=-O4 -lm -s
 # -Lsdl/lib -lSDL

@@ -17,6 +17,12 @@ struct value__pair
 	struct value* cdr;
 };
 
+struct value__quote
+{
+	struct value _base;
+	struct value* inside;
+};
+
 
 
 static struct value c_values[] =	// constant values
@@ -60,6 +66,12 @@ struct value* value_create_string (const char* s)
 	strcpy((char*)(v + 1), s);
 	return v;
 }
+struct value* value_create_symbol (const char* s)
+{
+	struct value* v = value_create(value_symbol, sizeof(struct value) + strlen(s) + 1);
+	strcpy((char*)(v + 1), s);
+	return v;
+}
 struct value* value_create_bool (bool b)
 {
 	if (b)
@@ -87,6 +99,19 @@ struct value* value_create_pair (struct value* a, struct value* b)
 	v->_base.f_free = pair_destroy;
 	return &v->_base;
 }
+
+static void quote_destroy (struct value* v)
+{
+	value_release(((struct value__quote*)v)->inside);
+}
+struct value* value_create_quote (struct value* q)
+{
+	struct value__quote* v = value_create(value_quote, sizeof(struct value__quote));
+	v->inside = q;
+	v->_base.f_free = quote_destroy;
+	return &v->_base;
+}
+
 void value_destroy (struct value* v)
 {
 	if (v->f_free != NULL)
@@ -152,7 +177,7 @@ void value_display (struct value* value)
 	switch (value_get_type(value))
 	{
 		case value_nil:
-			printf("nil");
+			printf("()");
 			break;
 			
 		case value_number:
@@ -248,6 +273,16 @@ void value_display (struct value* value)
 			putchar('"');
 			break;
 		}
+		
+		case value_symbol:
+			printf("%s", value_get_symbol_name(value));
+			break;
+			
+		case value_quote:
+			printf("(quote ");
+			value_display(((struct value__quote*)value)->inside);
+			printf(")");
+			break;
 		
 		case value_userdata:
 			printf("< Userdata %p >", value_get_userdata(value));

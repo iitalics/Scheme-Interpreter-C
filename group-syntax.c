@@ -390,6 +390,14 @@ bool atoken_parse_group (const char* name, int argc, struct token** argv, struct
 		*out = atoken_push(result);
 		return true;
 	}
+	if (strcmp(name, "quote") == 0)
+	{
+		if (argc != 1)
+			parse_error("Expected only one argument to 'quote' syntax");
+		
+		*out = atoken_const(value_quote_token(argv[0]));
+		return true;
+	}
 	
 	return false;
 }

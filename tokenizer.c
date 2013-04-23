@@ -246,8 +246,13 @@ start:
 			return c_rparen;
 			
 		case '"':
-		case '\'':
 			return tokens_create_string(read_quoted_string());
+		
+		case '\'':
+		{
+			t_read();
+			return tokens_create_quote(tokenizer_next());
+		}
 		
 		default:
 		{
@@ -312,4 +317,8 @@ struct token* tokens_create_string (const char* str)
 struct token* tokens_create_group (struct linked_list* items)
 {
 	return push_token(token_create_group(items));
+}
+struct token* tokens_create_quote (struct token* t)
+{
+	return push_token(token_create_quote(t));
 }
