@@ -39,14 +39,26 @@ void closure_set_release (struct closure* c, struct value** vals, int len)
 		c->vals[i] = vals[i];
 	}
 }
+void closure_clear (struct closure* c, int len)
+{
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		value_release(c->vals[i]);
+		c->vals[i] = NULL;
+	}
+}
+void closure_set_one (struct closure* c, int i, struct value* v)
+{
+	value_release(c->vals[i]);
+	c->vals[i] = v;
+}
 void closure_destroy (struct closure* c)
 {
 	if (c == NULL)
 		return;
 	
-	int i;
-	for (i = 0; i < c->size; i++)
-		value_release(c->vals[i]);
+	closure_clear(c, c->size);
 	w_free(c);
 }
 int closure_size (struct closure* c)

@@ -232,6 +232,40 @@ static struct value* while_evaluate (struct while_struct* s, struct closure* c)
 }
 
 
+struct set_struct
+{
+	struct atoken* value;
+	int cindex;
+};
+static struct value* set_evaluate (struct set_struct* s, struct closure* c)
+{
+	closure_set_one(c, s->cindex, atoken_evaluate(s->value, c));
+	return value_create_void();
+}
+static struct atoken* create_set (struct token* var, struct token* body, struct closure_proto* proto)
+{
+	if (var->type != token_symbol)
+		parse_error("Expected variable in 'set!' syntax to be symbol");
+	
+	char* name = ((struct token__symbol*)var)->name;
+	int index = closure_proto_get(proto, name);
+	if (index < 0)
+	{
+		char err[64 + strlen(name)];
+		sprintf(err, "Could not find local variable '%s'", name);
+		parse_error(err);
+	}
+	struct set_struct* data;
+	struct atoken* result = create_atoken(sizeof(struct set_struct), (void**)&data);
+	result->f_eval = (atoken_eval_function)set_evaluate;
+	result->f_destroy = NULL_DESTROY;
+	
+	data->value = atoken_parse(body, proto);
+	data->cindex = index;
+	
+	return result;
+}
+
 
 
 
@@ -393,9 +427,17 @@ bool atoken_parse_group (const char* name, int argc, struct token** argv, struct
 	if (strcmp(name, "quote") == 0)
 	{
 		if (argc != 1)
-			parse_error("Expected only one argument to 'quote' syntax");
+			parse_error("Expected 1 argument to 'quote' syntax");
 		
 		*out = atoken_const(value_quote_token(argv[0]));
+		return true;
+	}
+	if (strcmp(name, "set!") == 0)
+	{
+		if (argc != 2)
+			parse_error("Expected 2 arguments to 'set!' syntax");
+		
+		*out = atoken_push(create_set(argv[0], argv[1], proto));
 		return true;
 	}
 	

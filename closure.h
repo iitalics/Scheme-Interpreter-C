@@ -26,6 +26,8 @@ struct closure
 struct closure* closure_expand (struct closure* c, int add);
 void closure_set (struct closure* c, struct value** vals, int len);
 void closure_set_release (struct closure* c, struct value** vals, int len);
+void closure_clear (struct closure* c, int len);
+void closure_set_one (struct closure* c, int i, struct value* v);
 void closure_destroy (struct closure* c);
 int closure_size (struct closure* c);
 

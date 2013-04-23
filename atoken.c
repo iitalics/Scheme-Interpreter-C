@@ -70,7 +70,6 @@ static struct value* at_global_var_link_handler (struct value** value, struct cl
 
 
 
-
 static struct atoken* atoken_global_var (const char* name)
 {
 	struct global* g = global_global(name);
@@ -93,6 +92,11 @@ static struct atoken* atoken_global_var (const char* name)
 	t->f_destroy = null_destroy;
 	return atoken_push(t);
 }
+
+
+
+
+
 
 
 
