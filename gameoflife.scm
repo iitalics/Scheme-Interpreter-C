@@ -1,36 +1,13 @@
 (define @matrix-w)
 (define @matrix-h)
 
-(define (idx A i)
-  (if (= 0 i)
-      (car A)
-      (idx (cdr A)
-           (- i 1))))
-;
-
 (define (for-each A f)
   (if (null? A)
       #!void
       (do (f (car A))
           (for-each (cdr A)
                     f))))
-(define (reverse~ A B)
-  (if (null? A)
-      B
-      (reverse~ (cdr A)
-                (cons (car A) B))))
-(define (reverse A)
-  (reverse~ A '()))
 
-(define (map~ A f B)
-  (if (null? A)
-      (reverse B)
-      (map~ (cdr A)
-            f
-            (cons (f (car A))
-                  B))))
-(define (map f A)
-  (map~ A f '()))
 (define (repeat f times)
   (if (<= times 0)
       #!void
@@ -43,7 +20,8 @@
           (>= x @matrix-w)
           (>= y @matrix-h))
       0
-      (idx (idx M y) x)))
+      (list-ref (list-ref M y) x)))
+
 (define (matrix-map~r R x y A f)
   (if (null? R)
       (reverse A)
@@ -53,6 +31,7 @@
                     (cons (f (car R) x y)
                           A)
                     f)))
+
 (define (matrix-map~ M y A f)
   (if (null? M)
       (reverse A)
@@ -61,6 +40,7 @@
                    (cons (matrix-map~r (car M) 0 y '() f)
                          A)
                    f)))
+
 (define (matrix-map f M)
   (matrix-map~ M 0 '() f))
 
@@ -68,11 +48,17 @@
   (if (= q 0)
       ". "
       "[]"))
+
 (define (matrix-display M)
   (for-each M (lambda (row)
-                      (do (display (apply string-append (map matrix-tile row)))
+                      (do (display (apply string-append
+                                          (map matrix-tile row)))
                           (newline)))))
 ;
+
+
+
+
 (define (neighbors M x y)
   (+ (matrix-pos M (- x 1) y)
      (matrix-pos M (- x 1) (- y 1))
@@ -83,8 +69,6 @@
      (matrix-pos M x (+ y 1))
      (matrix-pos M x (- y 1))))
 
-
-;
 
 (define (populate-neighbors)
   (define *matrix-neighbors
@@ -108,7 +92,6 @@
   (do (display-life)
       (populate-neighbors)
       (update-life)))
-
 
 
 (define @matrix-w 10)

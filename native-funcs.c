@@ -603,12 +603,112 @@ static struct value* scm_atan (int argc, struct value** argv)
 }
 
 
+static struct value* scm_map (int argc, struct value** argv)
+{
+	args_check(argc, argv, 2, (enum value_type[]){ value_function, value_list }, "map");
+	
+	int length, i;
+	struct value** items =  list_items(argv[1], &length);
+	struct value* out;
+	struct value* pair = NULL;
+	
+	struct value* f_args[1];
+	
+	for (i = length; i-- > 0; )
+	{
+		f_args[0] = items[i];
+		out = function_apply((struct function*)argv[0], 1, f_args);
+		pair = value_create_pair(out, pair);
+	}
+	
+	w_free(items);
+	
+	return pair;
+}
+
+static struct value* scm_reverse (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_list }, "reverse");
+	
+	struct value* v;
+	struct value* pair = NULL;
+	
+	for (v = argv[0]; v != NULL; value_release(v = value_get_tail(v)))
+		pair = value_create_pair(value_get_head(v), pair);
+	
+	return pair;
+}
+static struct value* scm_length (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_list }, "length");
+	
+	struct value* v;
+	int length = 0;
+	
+	for (v = argv[0]; v != NULL; value_release(v = value_get_tail(v)))
+		length++;
+	
+	return value_create_number(length);
+}
+static struct value* scm_list_ref (int argc, struct value** argv)
+{
+	args_check(argc, argv, 2, (enum value_type[]){ value_list, value_integer }, "list-ref");
+	
+	struct value* v;
+	int i = (int)value_get_number(argv[1]);
+	
+	for (v = argv[0]; v != NULL; value_release(v = value_get_tail(v)))
+		if (i == 0)
+			return value_get_head(v);
+		else
+			i--;
+	
+	return value_create_void();
+}
+
+
+
+// ======================================= car/cdr variations ===============
+
+static struct value* scm_cdar (int ac, struct value** av)
+{
+	args_check(ac, av, 1, (enum value_type[]){ value_pair }, "cdar");
+	struct value* t = value_get_tail(av[0]);
+	value_release(t);
+	return scm_car(1, &t);
+}
+static struct value* scm_cadr (int ac, struct value** av)
+{
+	args_check(ac, av, 1, (enum value_type[]){ value_pair }, "cadr");
+	struct value* t = value_get_head(av[0]);
+	value_release(t);
+	return scm_cdr(1, &t);
+}
+static struct value* scm_cddr (int ac, struct value** av)
+{
+	args_check(ac, av, 1, (enum value_type[]){ value_pair }, "cddr");
+	struct value* t = value_get_tail(av[0]);
+	value_release(t);
+	return scm_cdr(1, &t);
+}
+static struct value* scm_caar (int ac, struct value** av)
+{
+	args_check(ac, av, 1, (enum value_type[]){ value_pair }, "caar");
+	struct value* t = value_get_head(av[0]);
+	value_release(t);
+	return scm_car(1, &t);
+}
 
 
 
 // ----------------------------------------------------------------------------------- //
 void register_native_functions ()
 {
+	function_register_native("map", scm_map);
+	function_register_native("reverse", scm_reverse);
+	function_register_native("length", scm_length);
+	function_register_native("list-ref", scm_list_ref);
+	
 	function_register_native("string->number", scm_string_to_number);
 	function_register_native("number->string", scm_number_to_string);
 	function_register_native("string->symbol", scm_string_to_symbol);
@@ -643,6 +743,11 @@ void register_native_functions ()
 	function_register_native("cdr", scm_cdr);
 	function_register_native("list", scm_list);
 	function_register_native("apply", scm_apply);
+	
+	function_register_native("caar", scm_caar);
+	function_register_native("cdar", scm_cdar);
+	function_register_native("cadr", scm_cadr);
+	function_register_native("cddr", scm_cddr);
 	
 	function_register_native(">", scm_gr);
 	function_register_native("<", scm_ls);
