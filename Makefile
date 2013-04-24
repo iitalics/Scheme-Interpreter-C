@@ -9,14 +9,16 @@ LFLAGS=-O4 -lm -s
 
 OUTPUT=scheme
 
-OBJECTS=main.o lists.o token.o tokenizer.o mem.o	\
-		value.o closure.o atoken.o group-syntax.o	\
-		err.o globals.o function.o native-funcs.o	\
-		scheme.o userdata.o
+OBJECTS=obj/main.o obj/lists.o obj/token.o obj/tokenizer.o obj/mem.o	\
+		obj/value.o obj/closure.o obj/atoken.o obj/group-syntax.o	\
+		obj/err.o obj/globals.o obj/function.o obj/native-funcs.o	\
+		obj/scheme.o obj/userdata.o
 		#sdl-funcs.o
 
 
 
+obj/%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 all: $(OUTPUT)
 clean:
