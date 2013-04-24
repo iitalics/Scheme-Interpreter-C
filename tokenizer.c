@@ -21,6 +21,43 @@ static char* read_string;
 static int read_i;
 static enum read_mode read_mode = read_mode_none;
 
+
+struct tstate
+{
+	FILE* fh;
+	char* str;
+	int ri;
+	enum read_mode rm;
+	int ln;
+};
+
+void* tokenizer_pull_state ()
+{
+	struct tstate* t = w_malloc(sizeof(struct tstate));
+	t->fh = read_fhandle;
+	t->str = read_string;
+	t->ri = read_i;
+	t->rm = read_mode;
+	t->ln = line_number;
+	read_mode = read_mode_none;
+	peek_cached = false;
+	return t;
+}
+void tokenizer_return_state (void* v)
+{
+	struct tstate* t = (struct tstate*)v;
+	
+	read_fhandle = t->fh;
+	read_string = t->str;
+	read_i = t->ri;
+	read_mode = t->rm;
+	line_number = t->ln;
+	
+	peek_cached = false;
+	w_free(v);
+}
+
+
 static struct token* all_tokens = NULL;
 
 
@@ -71,7 +108,7 @@ void tokenizer_close ()
 {
 	if (read_mode == read_mode_file)
 		fclose(read_fhandle);
-	else
+	else if (read_mode == read_mode_string)
 		free(read_string);
 	
 	read_mode = read_mode_none;

@@ -30,3 +30,6 @@ char t_read ();
 
 int t_line_number ();
 
+
+void* tokenizer_pull_state ();
+void tokenizer_return_state (void*);

@@ -54,8 +54,22 @@ void* value_create (enum value_type type, size_t s)
 	return v;
 }
 
+static struct value__number _const_0 =
+{
+	._base = { .type = value_number, .constant = true },
+	.value = 0
+};
+static struct value__number _const_1 =
+{
+	._base = { .type = value_number, .constant = true },
+	.value = 1
+};
+
+
 struct value* value_create_number (number_t value)
 {
+	if (value == 0) return &_const_0._base;
+	if (value == 1) return &_const_1._base;
 	struct value__number* v = value_create(value_number, sizeof(struct value__number));
 	v->value = value;
 	return &v->_base;

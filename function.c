@@ -21,7 +21,7 @@ struct function* function_create_lambda (int nargs, struct atoken* body, struct 
 	
 	lambda->nargs = nargs;
 	lambda->body = body;
-	lambda->closure = closure_expand(closure, nargs);
+	lambda->closure = closure_expand(closure, 0);//nargs);
 	
 	lambda->_base._base.f_free = lambda_free;
 	
@@ -65,7 +65,7 @@ static inline struct value* function_apply_lambda (struct function__lambda* f, i
 	function_check_arguments(f, argc);
 	
 	struct value* result = NULL;
-	struct closure* closure = f->closure;///closure_expand(f->closure, argc);
+	struct closure* closure = closure_expand(f->closure, argc);
 	closure_set(closure, argv, argc);
 	
 	struct closure_fold* fold = &closure->fold;
@@ -85,7 +85,8 @@ static inline struct value* function_apply_lambda (struct function__lambda* f, i
 		result = atoken_evaluate(f->body, closure);
 	}
 	
-	closure_clear(closure, argc);
+	//closure_clear(closure, argc);
+	closure_destroy(closure);
 	
 	if (fold->vals != NULL)
 		w_free(fold->vals);

@@ -3,11 +3,12 @@
 #include "value.h"
 #include "globals.h"
 #include "lists.h"
-
+#include "tokenizer.h"
+#include "scheme.h"
 
 /*
  *
- * Most of this file was generated using scripts I made
+ * Some of this file was generated using scripts I made
  * 
  */
 
@@ -240,7 +241,7 @@ static struct value* scm_eq (int argc, struct value** argv)
 static struct value* scm_and (int argc, struct value** argv)
 {
 	args_check_all(argc, argv, value_bool, "and");
-	bool result = false;
+	bool result = true;
 	int i;
 	for (i = 0; i < argc; i++)
 		result = result && value_get_bool(argv[i]);
@@ -414,6 +415,25 @@ static struct value* scm_exit (int argc, struct value** argv)
 	
 	exit(0);
 }
+static struct value* scm_load (int argc, struct value** argv)
+{
+	args_check_all(argc, argv, value_string, "load");
+	
+	void* old_state = tokenizer_pull_state();
+	
+	int i;
+	for (i = 0; i < argc; i++)
+	{
+		tokenizer_load_file(value_get_string(argv[i]));
+		scheme_repl();
+		tokenizer_close();
+	}
+	
+	tokenizer_return_state(old_state);
+	
+	return value_create_void();
+}
+
 static struct value* scm_number_to_string (int argc, struct value** argv)
 {
 	args_check(argc, argv, 1, (enum value_type[]){ value_number }, "number->string");
@@ -581,6 +601,13 @@ static struct value* scm_is_eq (int argc, struct value** argv)
 }
 
 
+static struct value* scm_abs (int argc, struct value** argv)
+{
+	args_check(argc, argv, 1, (enum value_type[]){ value_number }, "abs");
+	number_t n = value_get_number(argv[0]);
+	if (n < 0) n = -n;
+	return value_create_number(n);
+}
 static struct value* scm_log (int argc, struct value** argv)
 {
 	args_check(argc, argv, 1, (enum value_type[]){ value_number }, "log");
@@ -760,6 +787,7 @@ void register_native_functions ()
 	function_register_native("newline", scm_newline);
 	function_register_native("read", scm_read);
 	function_register_native("exit", scm_exit);
+	function_register_native("load", scm_load);
 	
 	function_register_native("null?", scm_is_null);
 	function_register_native("boolean?", scm_is_bool);
@@ -794,6 +822,7 @@ void register_native_functions ()
 	function_register_native("expt", scm_expt);
 	function_register_native("floor", scm_floor);
 	function_register_native("sqrt", scm_sqrt);
+	function_register_native("abs", scm_abs);
 	function_register_native("remainder", scm_modulo);
 	function_register_native("modulo", scm_modulo);
 	function_register_native("log", scm_log);
